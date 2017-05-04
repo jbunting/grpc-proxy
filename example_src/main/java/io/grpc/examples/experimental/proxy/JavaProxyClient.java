@@ -40,7 +40,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A simple client that requests a greeting from the {@link HelloWorldServer}.
  */
 public class JavaProxyClient {
   private static final Logger logger = Logger.getLogger(JavaProxyClient.class.getName());
@@ -83,6 +82,54 @@ public class JavaProxyClient {
     }
   }
 
+  public void greetMore(String user1, String user2) {
+    try {
+      logger.info("Will try to greet " + user1 + " and " + user2 + "...");
+
+      GreeterService greeterService = builder.get(GreeterService.class);
+      String response = greeterService.helloMore(user1, user2);
+
+
+
+      logger.info("Greeting:------------ " + response);
+    } catch (RuntimeException e) {
+      logger.log(Level.WARNING, "RPC failed", e);
+      return;
+    }
+  }
+
+  public void greetMulti(String user1, String user2) {
+    try {
+      logger.info("Will try to greet " + user1 + " and " + user2 + "...");
+
+      GreeterService greeterService = builder.get(GreeterService.class);
+      MultiResponse response = greeterService.helloList(user1, user2);
+
+
+      for (HelloRequest greeting: response.getList()) {
+        logger.info("Greeting:------------ " + greeting.getName());
+      }
+    } catch (RuntimeException e) {
+      logger.log(Level.WARNING, "RPC failed", e);
+      return;
+    }
+  }
+
+  public void greetMap(String user1, String user2) {
+    try {
+      logger.info("Will try to greet " + user1 + " and " + user2 + "...");
+
+      GreeterService greeterService = builder.get(GreeterService.class);
+      MapResponse response = greeterService.helloMap(user1, user2);
+
+
+      logger.info("Greeting:------------ " + user1 + " ... " + response.getMap().get(user1));
+      logger.info("Greeting:------------ " + user2 + " ... " + response.getMap().get(user2));
+    } catch (RuntimeException e) {
+      logger.log(Level.WARNING, "RPC failed", e);
+      return;
+    }
+  }
   /**
    * Greet server. If provided, the first element of {@code args} is the name to use in the
    * greeting.
@@ -94,6 +141,9 @@ public class JavaProxyClient {
       final String user1 = args.length > 0 ? args[0] : "world";
       final String user2 = args.length > 1 ? args[1] : "other world";
       client.greet(user1, user2);
+      client.greetMore(user1, user2);
+      client.greetMulti(user1, user2);
+      client.greetMap(user1, user2);
     } finally {
       client.shutdown();
     }
