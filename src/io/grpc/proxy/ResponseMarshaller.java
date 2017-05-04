@@ -4,25 +4,29 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 import io.grpc.MethodDescriptor.Marshaller;
-import io.grpc.examples.experimental.proxy.HelloResponse;
 import io.protostuff.LinkedBuffer;
 import io.protostuff.ProtobufIOUtil;
 import io.protostuff.Schema;
 import io.protostuff.runtime.RuntimeSchema;
 
-public class ResponseMarshaller implements Marshaller<Object> {
+public class ResponseMarshaller<T> implements Marshaller<T> {
+
+	private final Class<T> type;
+	private final Schema<T> respSchema;
+
+	public ResponseMarshaller(final Class<T> type) {
+		this.type = type;
+		this.respSchema = RuntimeSchema.getSchema(type);
+	}
 
 	@Override
-	public InputStream stream(Object value) {
+	public InputStream stream(T value) {
 		ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
-		Schema objSchema = RuntimeSchema.getSchema(value.getClass());
 		LinkedBuffer writeBuffer1 = LinkedBuffer.allocate(1000000);
 		try {
-			ProtobufIOUtil.writeTo(outputstream, value, objSchema, writeBuffer1);
+			ProtobufIOUtil.writeTo(outputstream, value, respSchema, writeBuffer1);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -32,17 +36,13 @@ public class ResponseMarshaller implements Marshaller<Object> {
 	}
 
 	@Override
-	public Object parse(InputStream stream) {
-		Schema<HelloResponse> respSchema = RuntimeSchema.getSchema(HelloResponse.class);
-		HelloResponse helloResponse = respSchema.newMessage();
+	public T parse(InputStream stream) {
+		T response = respSchema.newMessage();
 		try {
-			ProtobufIOUtil.mergeFrom(stream, helloResponse, respSchema);
+			ProtobufIOUtil.mergeFrom(stream, response, respSchema);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		return helloResponse;
+		return response;
 	}
-
-	
-
 }

@@ -1,15 +1,12 @@
 package io.grpc.proxy.server;
 
 import io.grpc.MethodDescriptor;
-import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerServiceDefinition;
-import io.grpc.examples.experimental.proxy.JavaProxyClient;
-import io.grpc.proxy.MessageTransfer;
-import io.grpc.proxy.MsgTransReqMarshaller;
-import io.grpc.proxy.ProtoStuffReqMsgTransMarshaller;
+import io.grpc.proxy.MethodParameters;
+import io.grpc.proxy.MethodParametersMarshaller;
 import io.grpc.proxy.ResponseMarshaller;
 import io.grpc.proxy.annotation.GrpcMethod;
 import io.grpc.proxy.annotation.GrpcService;
@@ -25,8 +22,7 @@ public class ProxyServerBuilder {
 	private final int port;
 	private final List<Object> serviceList;
 	private final Server server;
-	private final static Marshaller<Object> RESPONSE_MARSHALLER = new ResponseMarshaller();
-	
+
 	public static class Builder {
 		private final int port;
 		private final List<Object> serviceList;
@@ -74,13 +70,12 @@ public class ProxyServerBuilder {
 			Collection<Method> findAnnotatedMethods = ReflectionHelper.findAnnotatedMethods(serviceToInvoke.getClass(), GrpcMethod.class);
 			for(Method exposedMethod : findAnnotatedMethods) {
 				final String methodName = serviceInterfaceName+ "/" + exposedMethod.getName();
-				MsgTransReqMarshaller msgTransReqMarshaller  = 
-						new MsgTransReqMarshaller(exposedMethod.getParameterTypes());
-				
-				MethodDescriptor<MessageTransfer, Object> methodDescriptor = MethodDescriptor
+				MethodParametersMarshaller reqMarshaller = new MethodParametersMarshaller(exposedMethod.getParameterTypes());
+
+				MethodDescriptor<MethodParameters, Object> methodDescriptor = MethodDescriptor
 						.create(MethodType.UNARY, methodName,
-								msgTransReqMarshaller,
-								RESPONSE_MARSHALLER);
+								reqMarshaller,
+								new ResponseMarshaller(exposedMethod.getReturnType()));
 				
 				MethodInvocation methodInvokation = new MethodInvocation(serviceToInvoke, exposedMethod);
 				serviceDefBuilder.addMethod(methodDescriptor, ServerCalls.asyncUnaryCall(methodInvokation));

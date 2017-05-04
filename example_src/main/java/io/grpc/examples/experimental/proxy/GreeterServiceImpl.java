@@ -7,7 +7,7 @@ public class GreeterServiceImpl implements GreeterService {
 		System.out.println("request1 :" + request1.getName() + " request2:" + request2.getName());
 		
 		HelloResponse resultResponse = new HelloResponse();
-		resultResponse.setMessage("success");
+		resultResponse.setMessage("Hello " + request1.getName() + " and " + request2.getName());
 		return resultResponse;
 	}
 

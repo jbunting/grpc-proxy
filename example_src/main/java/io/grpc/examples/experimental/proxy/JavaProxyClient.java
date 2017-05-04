@@ -62,12 +62,12 @@ public class JavaProxyClient {
   }
 
   /** Say hello to server. */
-  public void greet(String name) {
+  public void greet(String user1, String user2) {
     try {
-      logger.info("Will try to greet " + name + " ...");
+      logger.info("Will try to greet " + user1 + " and " + user2 + "...");
       
-      HelloRequest request = new HelloRequest(name);
-      HelloRequest request2 = new HelloRequest(name+"2");
+      HelloRequest request = new HelloRequest(user1);
+      HelloRequest request2 = new HelloRequest(user2);
       
       
       
@@ -91,11 +91,9 @@ public class JavaProxyClient {
     JavaProxyClient client = new JavaProxyClient("localhost", 50051);
     try {
       /* Access a service running on the local machine on port 50051 */
-      String user = "world";
-      if (args.length > 0) {
-        user = args[0]; /* Use the arg as the name to greet if provided */
-      }
-      client.greet(user);
+      final String user1 = args.length > 0 ? args[0] : "world";
+      final String user2 = args.length > 1 ? args[1] : "other world";
+      client.greet(user1, user2);
     } finally {
       client.shutdown();
     }
