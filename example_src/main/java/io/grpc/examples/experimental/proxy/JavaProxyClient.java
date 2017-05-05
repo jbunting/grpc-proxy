@@ -50,7 +50,7 @@ public class JavaProxyClient {
 
   /** Construct client connecting to HelloWorld server at {@code host:port}. */
   public JavaProxyClient() {
-      channel = Communication.createClientChannel();
+      channel = Communication.DEFAULT.createClientChannel();
 	  builder = new ProxyClientBuilder(channel);
   }
 

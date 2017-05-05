@@ -15,12 +15,13 @@ public class JavaProxyServer {
 	
 	
 	private void start() throws Exception {
-		ProxyServerBuilder proxyServerBuilder = new ProxyServerBuilder.Builder()
+		Communication communication = Communication.DEFAULT;
+		ProxyServerBuilder proxyServerBuilder = new ProxyServerBuilder.Builder(communication)
 					.addService(new GreeterServiceImpl())
 					.build();
 		
 		server = proxyServerBuilder.startServer();
-		logger.info("Server started, listening on " + Communication.getListeningDescriptor());
+		logger.info("Server started, listening on " + communication.getListeningDescriptor());
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override

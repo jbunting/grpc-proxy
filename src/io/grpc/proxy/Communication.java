@@ -14,24 +14,38 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 /**
  * TODO: Document this class
  */
-public class Communication {
-    private static final boolean USE_UNIX_SOCKET = true;
-    private static final int PORT = 50053;
-    private static final String DOMAIN_SOCKET = "./grpc.socket";
-    public static ServerBuilder<?> createServerBuilder() {
-        if (USE_UNIX_SOCKET) {
+public interface Communication {
+    Communication DEFAULT = new DomainSocketCommunication();
+
+    ServerBuilder<?> createServerBuilder();
+
+    ManagedChannel createClientChannel();
+
+    String getListeningDescriptor();
+
+    class DomainSocketCommunication implements Communication {
+        private static final String DEFAULT_SOCKET_PATH = "./grpc.socket";
+        private final String socketPath;
+
+        public DomainSocketCommunication(String socketPath) {
+            this.socketPath = socketPath;
+        }
+
+        public DomainSocketCommunication() {
+            this(DEFAULT_SOCKET_PATH);
+        }
+
+        @Override
+        public ServerBuilder<?> createServerBuilder() {
             final DefaultThreadFactory threadFactory = new DefaultThreadFactory(EpollEventLoopGroup.class, true);
-            return NettyServerBuilder.forAddress(new DomainSocketAddress(DOMAIN_SOCKET))
+            return NettyServerBuilder.forAddress(new DomainSocketAddress(socketPath))
                     .bossEventLoopGroup(new EpollEventLoopGroup(0, threadFactory))
                     .workerEventLoopGroup(new EpollEventLoopGroup(0, threadFactory))
                     .channelType(EpollServerDomainSocketChannel.class);
-        } else {
-            return ServerBuilder.forPort(PORT);
         }
-    }
 
-    public static ManagedChannel createClientChannel() {
-        if (USE_UNIX_SOCKET) {
+        @Override
+        public ManagedChannel createClientChannel() {
             final DefaultThreadFactory threadFactory = new DefaultThreadFactory(EpollEventLoopGroup.class, true);
             return NettyChannelBuilder.forAddress(new DomainSocketAddress("./grpc.socket"))
                     .usePlaintext(true)
@@ -39,15 +53,42 @@ public class Communication {
                     .eventLoopGroup(new EpollEventLoopGroup(0, threadFactory))
                     .channelType(EpollDomainSocketChannel.class)
                     .build();
-        } else {
-            return ManagedChannelBuilder.forAddress("localhost", PORT)
-                    .usePlaintext(true)
-                    .build();
+        }
 
+        @Override
+        public String getListeningDescriptor() {
+            return "unix socket " + socketPath;
         }
     }
 
-    public static String getListeningDescriptor() {
-        return USE_UNIX_SOCKET ? "unix socket " + DOMAIN_SOCKET : "port " + PORT;
+    class PortCommunication implements Communication {
+        private static final int DEFAULT_PORT = 50053;
+
+        private final int port;
+
+        public PortCommunication(int port) {
+            this.port = port;
+        }
+
+        public PortCommunication() {
+            this(DEFAULT_PORT);
+        }
+
+        @Override
+        public ServerBuilder<?> createServerBuilder() {
+            return ServerBuilder.forPort(port);
+        }
+
+        @Override
+        public ManagedChannel createClientChannel() {
+            return ManagedChannelBuilder.forAddress("localhost", port)
+                    .usePlaintext(true)
+                    .build();
+        }
+
+        @Override
+        public String getListeningDescriptor() {
+            return "port " + port;
+        }
     }
 }

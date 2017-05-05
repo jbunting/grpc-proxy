@@ -17,6 +17,7 @@ import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.unix.DomainSocketAddress;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -26,12 +27,17 @@ import java.util.List;
 public class ProxyServerBuilder {
 	private final List<Object> serviceList;
 	private final Server server;
+	@Nonnull
+	private final Communication communication;
 
 	public static class Builder {
 		private final List<Object> serviceList;
-		
-		
-		public Builder() {
+		@Nonnull
+		private final Communication communication;
+
+
+		public Builder(@Nonnull Communication communication) {
+			this.communication = communication;
 			this.serviceList = new ArrayList<Object>();
 		}
 
@@ -55,11 +61,12 @@ public class ProxyServerBuilder {
 	
 	private ProxyServerBuilder(Builder builder) throws Exception {
 		this.serviceList = builder.serviceList;
+		this.communication = builder.communication;
 		this.server = register();
 	}
 	
 	private  Server register() throws Exception {
-		ServerBuilder<?> serverBuilder = Communication.createServerBuilder();
+		ServerBuilder<?> serverBuilder = communication.createServerBuilder();
 
 		for(Object serviceToInvoke : serviceList) {
 			List<Class> effectiveClassAnnotations = ReflectionHelper.getEffectiveClassAnnotations(serviceToInvoke.getClass(), GrpcService.class);
