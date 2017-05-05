@@ -28,3 +28,13 @@ And in a different terminal window run:
 $ ./build/install/grpc-proxy/bin/java-proxy-client
 ```
 
+## TODO
+
+Further things that I need to understand/prove out
+
+* Failover/retry/timeout logic
+* SSL
+* Authentication
+* Load balancing
+* Async (special handling for methods returning `Future`)
+* Scaling -- how are connections shared/multiplexed?
