@@ -3,22 +3,24 @@ package io.grpc.examples.experimental.proxy;
 import java.util.logging.Logger;
 
 import io.grpc.Server;
+import io.grpc.netty.NettyServerBuilder;
+import io.grpc.proxy.Communication;
 import io.grpc.proxy.server.ProxyServerBuilder;
+import io.netty.channel.unix.DomainSocketAddress;
 
 public class JavaProxyServer {
 	private static final Logger logger = Logger.getLogger(JavaProxyServer.class.getName());
 	
-	private int port = 50051;
 	private Server server;
 	
 	
 	private void start() throws Exception {
-		ProxyServerBuilder proxyServerBuilder = new ProxyServerBuilder.Builder(port)
+		ProxyServerBuilder proxyServerBuilder = new ProxyServerBuilder.Builder()
 					.addService(new GreeterServiceImpl())
 					.build();
 		
 		server = proxyServerBuilder.startServer();
-		logger.info("Server started, listening on " + port);
+		logger.info("Server started, listening on " + Communication.getListeningDescriptor());
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override

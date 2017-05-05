@@ -5,12 +5,17 @@ import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerServiceDefinition;
+import io.grpc.netty.NettyServerBuilder;
+import io.grpc.proxy.Communication;
 import io.grpc.proxy.MethodParameters;
 import io.grpc.proxy.MethodParametersMarshaller;
 import io.grpc.proxy.ResponseMarshaller;
 import io.grpc.proxy.annotation.GrpcMethod;
 import io.grpc.proxy.annotation.GrpcService;
 import io.grpc.stub.ServerCalls;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.unix.DomainSocketAddress;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -19,20 +24,17 @@ import java.util.Collection;
 import java.util.List;
 
 public class ProxyServerBuilder {
-	private final int port;
 	private final List<Object> serviceList;
 	private final Server server;
 
 	public static class Builder {
-		private final int port;
 		private final List<Object> serviceList;
 		
 		
-		public Builder(int port) {
-			this.port = port;
+		public Builder() {
 			this.serviceList = new ArrayList<Object>();
 		}
-		
+
 		public Builder addService(Object service) {
 			List<Class> effectiveClassAnnotations = ReflectionHelper.getEffectiveClassAnnotations(service.getClass(), GrpcService.class);
 			if( effectiveClassAnnotations.size() != 1 ) {
@@ -52,15 +54,13 @@ public class ProxyServerBuilder {
 	}
 	
 	private ProxyServerBuilder(Builder builder) throws Exception {
-		this.port = builder.port;
 		this.serviceList = builder.serviceList;
 		this.server = register();
 	}
 	
 	private  Server register() throws Exception {
-		ServerBuilder<?> serverBuilder = ServerBuilder.forPort(port);
-		
-		
+		ServerBuilder<?> serverBuilder = Communication.createServerBuilder();
+
 		for(Object serviceToInvoke : serviceList) {
 			List<Class> effectiveClassAnnotations = ReflectionHelper.getEffectiveClassAnnotations(serviceToInvoke.getClass(), GrpcService.class);
 			String  serviceInterfaceName = effectiveClassAnnotations.get(0).getName();

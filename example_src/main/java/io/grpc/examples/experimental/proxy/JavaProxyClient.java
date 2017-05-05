@@ -32,7 +32,7 @@
 package io.grpc.examples.experimental.proxy;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import io.grpc.proxy.Communication;
 import io.grpc.proxy.client.ProxyClientBuilder;
 
 import java.util.concurrent.TimeUnit;
@@ -49,10 +49,8 @@ public class JavaProxyClient {
   
 
   /** Construct client connecting to HelloWorld server at {@code host:port}. */
-  public JavaProxyClient(String host, int port) {
-	  channel = ManagedChannelBuilder.forAddress(host, port)
-		        .usePlaintext(true)
-		        .build();
+  public JavaProxyClient() {
+      channel = Communication.createClientChannel();
 	  builder = new ProxyClientBuilder(channel);
   }
 
@@ -130,20 +128,27 @@ public class JavaProxyClient {
       return;
     }
   }
+
+  public void stuff() {
+      logger.info("Doing stuffs....");
+    GreeterService greeterService = builder.get(GreeterService.class);
+    logger.info("tostring: " + greeterService.toString());
+
+  }
   /**
    * Greet server. If provided, the first element of {@code args} is the name to use in the
    * greeting.
    */
   public static void main(String[] args) throws Exception {
-    JavaProxyClient client = new JavaProxyClient("localhost", 50051);
+    JavaProxyClient client = new JavaProxyClient();
     try {
-      /* Access a service running on the local machine on port 50051 */
       final String user1 = args.length > 0 ? args[0] : "world";
       final String user2 = args.length > 1 ? args[1] : "other world";
       client.greet(user1, user2);
       client.greetMore(user1, user2);
       client.greetMulti(user1, user2);
       client.greetMap(user1, user2);
+//      client.stuff();
     } finally {
       client.shutdown();
     }

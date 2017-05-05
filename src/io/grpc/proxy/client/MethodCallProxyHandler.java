@@ -13,6 +13,7 @@ import io.grpc.stub.ClientCalls;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class MethodCallProxyHandler implements InvocationHandler {
 
@@ -33,7 +34,7 @@ public class MethodCallProxyHandler implements InvocationHandler {
 	    				new MethodParametersMarshaller(method.getParameterTypes()), new ResponseMarshaller(method.getReturnType()));
 	      ClientCall<MethodParameters, Object> newCall = channel.newCall(methodDescriptor, CallOptions.DEFAULT);
 	      
-	      Object response = ClientCalls.blockingUnaryCall(newCall, new MethodParameters(Arrays.asList(args)));
+	      Object response = ClientCalls.blockingUnaryCall(newCall, new MethodParameters(args == null || args.length == 0 ? Collections.emptyList() : Arrays.asList(args)));
 	      return response;
 	}
 
