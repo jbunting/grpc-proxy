@@ -15,6 +15,7 @@ public class ResponseMarshaller<T> implements Marshaller<T> {
 
 	private final Class<T> type;
 	private final Schema<T> respSchema;
+	private final Serialization serialization = Serialization.DEFAULT;
 
 	public ResponseMarshaller(final Class<T> type) {
 		this.type = type;
@@ -26,7 +27,7 @@ public class ResponseMarshaller<T> implements Marshaller<T> {
 		ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
 		LinkedBuffer writeBuffer1 = LinkedBuffer.allocate(1000000);
 		try {
-			ProtobufIOUtil.writeTo(outputstream, value, respSchema, writeBuffer1);
+			serialization.serialize(outputstream, value, respSchema, writeBuffer1);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -39,7 +40,7 @@ public class ResponseMarshaller<T> implements Marshaller<T> {
 	public T parse(InputStream stream) {
 		T response = respSchema.newMessage();
 		try {
-			ProtobufIOUtil.mergeFrom(stream, response, respSchema);
+		    serialization.deserialize(stream, response, respSchema);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

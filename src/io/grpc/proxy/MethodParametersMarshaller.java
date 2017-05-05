@@ -3,6 +3,7 @@ package io.grpc.proxy;
 import io.grpc.MethodDescriptor;
 import io.protostuff.LinkedBuffer;
 import io.protostuff.ProtobufIOUtil;
+import io.protostuff.ProtostuffIOUtil;
 import io.protostuff.Schema;
 import io.protostuff.runtime.RuntimeSchema;
 import org.apache.commons.lang.Validate;
@@ -17,6 +18,7 @@ import java.util.List;
 public class MethodParametersMarshaller implements MethodDescriptor.Marshaller<MethodParameters> {
 
     private final Schema<Object>[] schemas;
+    private final Serialization serialization = Serialization.DEFAULT;
 
     public MethodParametersMarshaller(Class<?>[] paramTypes) {
 
@@ -37,7 +39,7 @@ public class MethodParametersMarshaller implements MethodDescriptor.Marshaller<M
         try {
             for (int i = 0; i < schemas.length; i++) {
                 System.err.printf("  marshall param %d%n", i);
-                ProtobufIOUtil.writeDelimitedTo(outputstream, value.getParams().get(i), schemas[i], writeBuffer1);
+                serialization.serialize(outputstream, value.getParams().get(i), schemas[i], writeBuffer1);
                 writeBuffer1.clear();
             }
         } catch (IOException e) {
@@ -60,7 +62,7 @@ public class MethodParametersMarshaller implements MethodDescriptor.Marshaller<M
             Schema<Object> schema = schemas[i];
             Object param = schema.newMessage();
             try {
-                ProtobufIOUtil.mergeDelimitedFrom(stream, param, schema);
+                serialization.deserialize(stream, param, schema);
             } catch (IOException e) {
                 throw new RuntimeException("Failed to parse param " + i, e);
             }
